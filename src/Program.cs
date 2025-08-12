@@ -1,57 +1,39 @@
-﻿using Azure; // AzureKeyCredential
-using Azure.AI.OpenAI;
-using Microsoft.Extensions.Configuration;
-using OpenAI.Chat;
-using Spectre.Console;
-using System.Linq;
+﻿using Spectre.Console.Cli;
+using BrandshareDamSync.Cli.Commands;
 
-// Load configuration (appsettings + user-secrets + env)
-var config = new ConfigurationBuilder()
-    .SetBasePath(AppContext.BaseDirectory)
-    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
-    .AddUserSecrets(typeof(Program).Assembly, optional: true, reloadOnChange: false)
-    .AddEnvironmentVariables()
-    .Build();
-
-var endpoint = config["AzureOpenAI:Endpoint"];
-var apiKey = config["AzureOpenAI:ApiKey"];            // filled by user-secrets/env/appsettings
-var deployment = config["AzureOpenAI:Deployment"];
-
-if (string.IsNullOrWhiteSpace(endpoint) ||
-    string.IsNullOrWhiteSpace(apiKey) ||
-    string.IsNullOrWhiteSpace(deployment))
+public sealed class Program
 {
-    AnsiConsole.MarkupLine("[red]Missing AzureOpenAI config. Check Endpoint/ApiKey/Deployment.[/]");
-    return;
-}
+    public static async Task<int> Main(string[] args)
+    {
+        var app = new CommandApp();
 
-// Prompt (or take args)
-var prompt = args.Length > 0
-    ? string.Join(" ", args)
-    : AnsiConsole.Prompt(new TextPrompt<string>("Enter your prompt:").PromptStyle("green"));
+        app.Configure(cfg =>
+        {
+            cfg.SetApplicationName("brandshare-dam-sync");
 
-AnsiConsole.MarkupLine("[grey]Sending to Azure OpenAI...[/]");
+            cfg.AddBranch("job", b =>
+            {
+                b.AddCommand<JobAddCommand>("add");
+                b.AddCommand<JobListCommand>("list");
+                b.AddCommand<JobRunOnceCommand>("run-once");
+            });
 
-// Use AzureOpenAIClient with AzureKeyCredential (correct for Azure.AI.OpenAI)
-var client = new AzureOpenAIClient(new Uri(endpoint), new AzureKeyCredential(apiKey));
-var chat = client.GetChatClient(deployment);
+            cfg.AddCommand<SetupCommand>("setup");
+            cfg.AddCommand<StartCommand>("start");
+            cfg.AddCommand<StopCommand>("stop");
+            cfg.AddCommand<StatusCommand>("status");
+            cfg.AddCommand<WatchCommand>("watch");
+            cfg.AddCommand<SimulateCommand>("simulate");
+            cfg.AddCommand<AiAskCommand>("ai");
 
-try
-{
-    var result = chat.CompleteChat(
-    [
-        new SystemChatMessage("You are a concise assistant."),
-        new UserChatMessage(prompt)
-    ]);
+            // NEW: interactive menu command
+            cfg.AddCommand<MenuCommand>("menu").WithDescription("Interactive menu");
+        });
 
-    var text = string.Join("", result.Value.Content
-        .Where(p => p.Text is not null)
-        .Select(p => p.Text));
+        // Default to interactive menu when no arguments are provided
+        if (args is null || args.Length == 0)
+            args = new[] { "menu" };
 
-    AnsiConsole.MarkupLine("\n[bold]Response:[/]");
-    AnsiConsole.WriteLine(string.IsNullOrWhiteSpace(text) ? "(no text content)" : text);
-}
-catch (Exception ex)
-{
-    AnsiConsole.MarkupLine($"[red]Request failed:[/] {ex.Message}");
+        return await app.RunAsync(args);
+    }
 }
