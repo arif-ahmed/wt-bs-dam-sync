@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "BrandshareDamSync": {
+      "commandName": "Project",
+      "commandLineArgs": "service"
+    }
+  }
+}
