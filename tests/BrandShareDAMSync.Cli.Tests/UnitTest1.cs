@@ -1,4 +1,4 @@
-﻿namespace BrandShareDAMSync.Cli.Tests;
+namespace BrandshareDamSync.Cli.Tests;
 
 public class UnitTest1
 {
