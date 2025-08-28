@@ -1,0 +1,51 @@
+name: Publish
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  publish:
+    strategy:
+      fail-fast: false
+      matrix:
+        rid: [win-x64, linux-x64, osx-x64, osx-arm64]
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: ubuntu-latest
+            rid: linux-x64
+          - os: macos-latest
+            rid: osx-x64
+          - os: macos-latest
+            rid: osx-arm64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            9.0.x
+            8.0.x
+          include-prerelease: true  # remove if you’re on GA 9.0
+
+      - name: Verify dotnet
+        run: dotnet --info
+
+      - name: Publish
+        shell: pwsh
+        run: ./scripts/publish.ps1 -Runtime ${{ matrix.rid }} -Configuration Release -Clean
+
+      - name: Upload artefacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dam-sync-${{ matrix.rid }}
+          path: |
+            publish/**/worker/${{ matrix.rid }}/*BrandshareDamSyncd*
+            publish/**/cli/${{ matrix.rid }}/*bs-dam-sync*

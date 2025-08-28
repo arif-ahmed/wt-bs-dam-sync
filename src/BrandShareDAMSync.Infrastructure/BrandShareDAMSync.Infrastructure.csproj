@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BrandshareDamSync.Abstractions\BrandshareDamSync.Abstractions.csproj" />
+    <ProjectReference Include="..\BrandshareDamSync.Domain\BrandshareDamSync.Domain.csproj" />
+    <ProjectReference Include="..\BrandshareDamSync.Infrastructure.Persistence\BrandshareDamSync.Infrastructure.Persistence.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AWSSDK.S3" Version="4.0.6.7" />
+    <PackageReference Include="AWSSDK.Transfer" Version="4.0.1.8" />
+    <PackageReference Include="Refit" Version="8.0.0" />
+    <PackageReference Include="Refit.Newtonsoft.Json" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Download\Options\" />
+  </ItemGroup>
+
+</Project>
